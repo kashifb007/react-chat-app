@@ -1,8 +1,11 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
 import { useEffect, useRef, useState } from 'react';
+import MessageItem from '@/components/message';
+import Recipient from '@/components/recipient';
 import { useInitials } from '@/hooks/use-initials';
 import AppLayout from '@/layouts/app-layout';
+import { fetchChatId, postMessage } from '@/queries';
 import type { Auth } from '@/types/auth';
 import type { Chat } from '@/types/chat';
 import type { Message } from '@/types/message';
@@ -83,7 +86,7 @@ export default function Messages() {
     }, [recipient]);
 
     // recipient clicked
-    async function handleSelectUser(chat: Chat) {
+    async function selectRecipient(chat: Chat) {
         const initials = getInitials(chat.name);
 
         // update selected recipient
@@ -102,17 +105,7 @@ export default function Messages() {
         );
 
         // POST to 'user-selected' route to retrieve a chat ID
-        const response = await fetch('/user_selected', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-XSRF-TOKEN': csrfToken,
-                Accept: 'application/json',
-            },
-            body: JSON.stringify({ user_id: chat.user_id }),
-        });
-
-        const data = await response.json();
+        const data = await fetchChatId(csrfToken, chat);
 
         // Save chat_id
         setChatId(data.chat_id);
@@ -133,21 +126,12 @@ export default function Messages() {
         );
 
         // POST to 'send-message' route
-        const response = await fetch('/send_message', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-XSRF-TOKEN': csrfToken,
-                Accept: 'application/json',
-            },
-            body: JSON.stringify({
-                chat_id: chatId,
-                recipient_id: selectedRecipient.current.userId,
-                message: messageText.trim(),
-            }),
-        });
-
-        const data = await response.json();
+        const data = await postMessage(
+            csrfToken,
+            chatId,
+            selectedRecipient,
+            messageText,
+        );
 
         // reload messages
         setMessages(data.messages);
@@ -176,30 +160,15 @@ export default function Messages() {
                         </h2>
                     </div>
                     <div className="flex-1 overflow-y-auto">
-                        {chats.map((chat) => {
-                            const initials = getInitials(chat.name);
-                            const isActive = recipientUserId === chat.user_id;
-                            return (
-                                <button
-                                    key={chat.user_id}
-                                    onClick={() => handleSelectUser(chat)}
-                                    className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
-                                        isActive
-                                            ? 'bg-gray-100 dark:bg-zinc-800'
-                                            : 'hover:bg-gray-50 dark:hover:bg-zinc-800/60'
-                                    }`}
-                                >
-                                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-indigo-500">
-                                        <span className="text-sm font-semibold text-white">
-                                            {initials}
-                                        </span>
-                                    </div>
-                                    <span className="truncate text-sm font-medium text-gray-900 dark:text-zinc-100">
-                                        {chat.name}
-                                    </span>
-                                </button>
-                            );
-                        })}
+                        {chats.map((chat) => (
+                            <Recipient
+                                key={chat.user_id}
+                                chat={chat}
+                                initials={getInitials(chat.name)}
+                                isActive={recipientUserId === chat.user_id}
+                                onClick={() => selectRecipient(chat)}
+                            />
+                        ))}
                     </div>
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col bg-gray-50 dark:bg-zinc-950">
@@ -222,25 +191,13 @@ export default function Messages() {
                         )}
                     </div>
                     <div className="flex-1 space-y-3 overflow-y-auto p-4">
-                        {messagesList.map((msg, index) => {
-                            const myMessage = auth.user.id === msg.sender_id;
-                            return (
-                                <div
-                                    key={index}
-                                    className={`flex ${myMessage ? 'justify-end' : 'justify-start'}`}
-                                >
-                                    <div
-                                        className={`max-w-[60%] rounded-2xl px-4 py-2 text-sm leading-relaxed ${
-                                            myMessage
-                                                ? 'rounded-br-sm bg-green-500 text-white'
-                                                : 'rounded-bl-sm bg-white text-gray-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-100'
-                                        }`}
-                                    >
-                                        {msg.message}
-                                    </div>
-                                </div>
-                            );
-                        })}
+                        {messagesList.map((msg, index) => (
+                            <MessageItem
+                                key={index}
+                                msg={msg}
+                                myMessage={auth.user.id === msg.sender_id}
+                            />
+                        ))}
                     </div>
 
                     <div className="flex-shrink-0 border-t border-gray-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
