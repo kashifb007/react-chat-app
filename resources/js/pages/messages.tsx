@@ -27,9 +27,7 @@ export default function Messages() {
     // set recipient highlight and the chat header, initially null
     const [recipientUserId, setRecipientUserId] = useState<number | null>(null);
     const [recipientName, setRecipientName] = useState<string | null>(null);
-    const [recipientInitials, setRecipientInitials] = useState<string | null>(
-        null,
-    );
+    const [recipientInitials, setRecipientInitials] = useState<string | null>(null);
 
     // messages list
     const [messagesList, setMessages] = useState<Message[]>(messages ?? []);
