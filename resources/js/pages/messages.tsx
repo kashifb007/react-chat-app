@@ -45,9 +45,7 @@ export default function Messages() {
     // called on chat load and pusher event.
     function fetchMessages() {
         // only run when on /messages/{chat_id}
-        const chatIdInt = parseInt(
-            window.location.pathname.split('/').pop() ?? '',
-        );
+        const chatIdInt = parseInt(window.location.pathname.split('/').pop() ?? '');
         // not a number
         if (isNaN(chatIdInt)) {
             return;
@@ -59,9 +57,7 @@ export default function Messages() {
     }
 
     function getCsrfToken() {
-        return decodeURIComponent(
-            document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '',
-        )
+        return decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '')
     }
 
     // watch 'messages' prop, refresh messages
@@ -71,7 +67,9 @@ export default function Messages() {
 
     // when 'messages.chat-id' loads it returns 'recipient' prop.
     useEffect(() => {
-        if (!recipient) return;
+        if (!recipient) {
+            return;
+        }
 
         const initials = getInitials(recipient.name);
         setRecipientUserId(recipient.user_id);
@@ -117,8 +115,9 @@ export default function Messages() {
     // Send button clicked
     async function sendMessage() {
         // validation
-        if (!chatId || !selectedRecipient.current.userId || !messageText.trim())
+        if (!chatId || !selectedRecipient.current.userId || !messageText.trim()) {
             return;
+        }
 
         // security
         const csrfToken = getCsrfToken();
