@@ -33,7 +33,7 @@ export default function Messages() {
     const [messagesList, setMessages] = useState<Message[]>(messages ?? []);
 
     // message text box
-    const [messageText, setMessageText] = useState('');
+    const [messageText, setMessageText] = useState<string>('');
 
     // useRef holds the latest recipient
     const selectedRecipient = useRef<{
