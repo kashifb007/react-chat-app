@@ -49,9 +49,19 @@ export default function Messages() {
             window.location.pathname.split('/').pop() ?? '',
         );
         // not a number
-        if (isNaN(chatIdInt)) return;
+        if (isNaN(chatIdInt)) {
+            return;
+        } else {
+            setChatId(chatIdInt);
+        }
 
         router.reload({ only: ['messages'] });
+    }
+
+    function getCsrfToken() {
+        return decodeURIComponent(
+            document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '',
+        )
     }
 
     // watch 'messages' prop, refresh messages
@@ -63,12 +73,6 @@ export default function Messages() {
     useEffect(() => {
         if (!recipient) return;
 
-        // get chat_id from URL: /messages/{chat_id}
-        const chatIdInt = parseInt(
-            window.location.pathname.split('/').pop() ?? '',
-        );
-        if (!isNaN(chatIdInt)) setChatId(chatIdInt);
-
         const initials = getInitials(recipient.name);
         setRecipientUserId(recipient.user_id);
         setRecipientName(recipient.name);
@@ -76,7 +80,7 @@ export default function Messages() {
         selectedRecipient.current = {
             userId: recipient.user_id,
             name: recipient.name,
-            initials,
+            initials: initials,
         };
 
         // Load messages for this chat
@@ -94,13 +98,11 @@ export default function Messages() {
         selectedRecipient.current = {
             userId: chat.user_id,
             name: chat.name,
-            initials,
+            initials: initials,
         };
 
         // security
-        const csrfToken = decodeURIComponent(
-            document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '',
-        );
+        const csrfToken = getCsrfToken();
 
         // POST to 'user-selected' route to retrieve a chat ID
         const data = await fetchChatId(csrfToken, chat);
@@ -119,9 +121,7 @@ export default function Messages() {
             return;
 
         // security
-        const csrfToken = decodeURIComponent(
-            document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '',
-        );
+        const csrfToken = getCsrfToken();
 
         // POST to 'send-message' route
         const data = await postMessage(

@@ -28,7 +28,6 @@ class MessageController extends Controller
             [
                 'chats' => UserResource::collection($users)->resolve(),
                 'messages' => null,
-                'sender' => null,
             ]
         );
     }
